@@ -26,8 +26,7 @@ class Environment:
 
     # Prints environment
     def print_env(self):
-        clear = lambda: os.system('cls')
-        clear()
+        os.system('cls')
         for i in range(len(self.matrix)):
             for n in range(len(self.matrix[0])):
                 print(self.matrix[i][n], end='')
