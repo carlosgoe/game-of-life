@@ -31,6 +31,12 @@ def generate():
     env.print_env()
 
 
+# Used to set initial state manually
+def initial_state(*positions):
+    for p in positions:
+        env.set_alive(*p)
+
+
 # Starts game of life with the default time between generations being 1s
 def start(delay=1):
     t = 0
