@@ -33,7 +33,7 @@ class Environment:
         os.system('cls')
         for i in range(len(self.matrix)):
             for n in range(len(self.matrix[i])):
-                print(self.matrix[i][n], end='')
+                print(self.matrix[i][n], end=' ')
             print()
 
     # Returns whether every cell is dead
