@@ -3,10 +3,18 @@ from time import sleep
 import random
 import copy
 
-# Initial environment of size rows*columns
+# Default size (rows*columns) of initial environment
 rows = 5
 columns = 10
 env = Environment(rows, columns)
+
+
+# Allows user to set size of environment
+def set_size(rws, clmns):
+    global rows, columns, env
+    rows = rws
+    columns = clmns
+    env = Environment(rows, columns)
 
 
 # Plus one generation
@@ -39,14 +47,16 @@ def initial_state(*positions):
 
 # Starts game of life with the default time between generations being 1s
 def start(delay=1):
-    t = 0
+    t = -1
     while True:
-        if env.all_dead():
-            break
-        t_plus_1()
+        if t == -1:
+            generate()
+        else:
+            t_plus_1()
         t += 1
         print('\nTime: ' + str(t))
         print('Population: ' + str(env.population()))
         print('Size: ' + str(env.size()))
         sleep(delay)
-    print('No living cell left.')
+        if env.all_dead():
+            break
