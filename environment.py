@@ -1,93 +1,58 @@
 import os
+import numpy as np
 
 
 class Environment:
 
-    # Creates environment setting every cell's status to dead
-    def __init__(self, rows, columns):
-        self.matrix = []
-        self.alive = {}
-        for i in range(rows):
-            r = []
-            for n in range(columns):
-                r.append(' ')
-                self.alive[(i, n)] = False
-            self.matrix.append(r)
-
-    # Sets certain cell alive
-    def set_alive(self, row, column):
-        self.matrix[row][column] = '□'
-        self.alive[(row, column)] = True
-        if row == len(self.matrix) - 1:
-            self.add_row()
-        if column == len(self.matrix[0]) - 1:
-            self.add_column()
-
-    # Sets certain cell dead
-    def set_dead(self, row, column):
-        self.matrix[row][column] = ' '
-        self.alive[(row, column)] = False
+    # Creates environment
+    def __init__(self, rows, columns, custom=None):
+        self.matrix = np.random.randint(0, 2, (rows, columns)) if custom is None else np.array(custom)
+        positions = np.argwhere(self.matrix == 1)
+        if positions.size > 0:
+            self.matrix = self.matrix[np.min(positions[:, 0]):np.max(positions[:, 0]) + 1, np.min(positions[:, 1]):np.max(positions[:, 1]) + 1]
+        else:
+            self.matrix = np.empty((0, 0))
+    
+    # Applies rules to get next state
+    def next_state(self):
+        positions = np.argwhere(self.matrix == 1)
+        if np.min(positions[:, 1]) == 0:
+            self.matrix = np.concatenate((np.zeros((self.matrix.shape[0], 1)), self.matrix), axis=1)
+        if np.max(positions[:, 1]) == self.matrix.shape[1] - 1:
+            self.matrix = np.concatenate((self.matrix, np.zeros((self.matrix.shape[0], 1))), axis=1)
+        if np.min(positions[:, 0]) == 0:
+            self.matrix = np.concatenate((np.zeros((1, self.matrix.shape[1])), self.matrix), axis=0)
+        if np.max(positions[:, 0]) == self.matrix.shape[0] - 1:
+            self.matrix = np.concatenate((self.matrix, np.zeros((1, self.matrix.shape[1]))), axis=0)
+        new_env = np.zeros((self.matrix.shape[0], self.matrix.shape[1]))
+        for r in range(self.matrix.shape[0]):
+            for c in range(self.matrix.shape[1]):
+                n_alive = 0
+                if r > 0 and self.matrix[r - 1, c] == 1:
+                    n_alive += 1
+                if r < self.matrix.shape[0] - 1 and self.matrix[r + 1, c] == 1:
+                    n_alive += 1
+                if c > 0 and self.matrix[r, c - 1] == 1:
+                    n_alive += 1
+                if c < self.matrix.shape[1] - 1 and self.matrix[r, c + 1] == 1:
+                    n_alive += 1
+                if c > 0 and r > 0 and self.matrix[r - 1, c - 1] == 1:
+                    n_alive += 1
+                if c < self.matrix.shape[1] - 1 and r > 0 and self.matrix[r - 1, c + 1] == 1:
+                    n_alive += 1
+                if c > 0 and r < self.matrix.shape[0] - 1 and self.matrix[r + 1, c - 1] == 1:
+                    n_alive += 1
+                if c < self.matrix.shape[1] - 1 and r < self.matrix.shape[0] - 1 and self.matrix[r + 1, c + 1] == 1:
+                    n_alive += 1
+                if (self.matrix[r, c] == 0 and n_alive == 3) or (self.matrix[r, c] == 1 and 2 <= n_alive <= 3):
+                    new_env[r, c] = 1
+        positions = np.argwhere(new_env == 1)
+        if positions.size > 0:
+            self.matrix = new_env[np.min(positions[:, 0]):np.max(positions[:, 0]) + 1, np.min(positions[:, 1]):np.max(positions[:, 1]) + 1]
+        else:
+            self.matrix = np.empty((0, 0))
+        return int(np.sum(self.matrix)), '{0}x{1}'.format(self.matrix.shape[0], self.matrix.shape[1])
 
     # Prints environment
     def print_env(self):
-        os.system('cls')
-        for i in range(len(self.matrix)):
-            for n in range(len(self.matrix[i])):
-                print(self.matrix[i][n], end=' ')
-            print()
-
-    # Returns whether every cell is dead
-    def all_dead(self):
-        states = list(self.alive.values())
-        for s in states:
-            if s:
-                return False
-        return True
-
-    # Returns current population
-    def population(self):
-        ppl = 0
-        states = list(self.alive.values())
-        for s in states:
-            if s:
-                ppl += 1
-        return ppl
-
-    # Returns size of matrix as string
-    def size(self):
-        return str(len(self.matrix)) + 'x' + str(len(self.matrix[0]))
-
-    # Returns number of certain cell's alive neighbors
-    def alive_neighbors(self, row, column):
-        n_alive = 0
-        if row > 0 and self.alive[(row - 1, column)]:
-            n_alive += 1
-        if row < len(self.matrix) - 1 and self.alive[(row + 1, column)]:
-            n_alive += 1
-        if column > 0 and self.alive[(row, column - 1)]:
-            n_alive += 1
-        if column < len(self.matrix[0]) - 1 and self.alive[(row, column + 1)]:
-            n_alive += 1
-        if column > 0 and row > 0 and self.alive[(row - 1, column - 1)]:
-            n_alive += 1
-        if column < len(self.matrix[0]) - 1 and row > 0 and self.alive[(row - 1, column + 1)]:
-            n_alive += 1
-        if column > 0 and row < len(self.matrix) - 1 and self.alive[(row + 1, column - 1)]:
-            n_alive += 1
-        if column < len(self.matrix[0]) - 1 and row < len(self.matrix) - 1 and self.alive[(row + 1, column + 1)]:
-            n_alive += 1
-        return n_alive
-
-    # Expands matrix by new row of dead cells
-    def add_row(self):
-        row = []
-        for i in range(len(self.matrix[0])):
-            row.append(' ')
-            self.alive[(len(self.matrix), i)] = False
-        self.matrix.append(row)
-
-    # Expands matrix by new column of dead cells
-    def add_column(self):
-        for i in range(len(self.matrix)):
-            self.alive[(i, len(self.matrix[i]))] = False
-            self.matrix[i].append(' ')
+        print(' ' + str(self.matrix).replace('.', '').replace(']', '').replace('[', '').replace('0', ' ').replace('1', '■'))
