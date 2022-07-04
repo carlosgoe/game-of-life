@@ -1,6 +1,6 @@
 # game-of-life
 
-A minimalist Python implementation of the Game of Life by John Conway using NumPy.
+A minimalist Python implementation (using NumPy) of the Game of Life by John Conway.
 
 A random initial state is generated and the environment is updated and printed to console until the number of alive cells reaches zero.
 
